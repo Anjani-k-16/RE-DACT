@@ -1,0 +1,7 @@
+streamlit
+pandas
+faker
+pdfplumber
+pillow
+pytesseract
+openpyxl
