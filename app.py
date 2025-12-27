@@ -8,8 +8,8 @@ from PIL import Image
 import pytesseract
 import io
 
-fake = Faker()
 
+fake = Faker()
 
 
 def detect_entities(text):
@@ -89,16 +89,61 @@ def extract_text_from_pdf(file):
     return text
 
 
+
+st.set_page_config(page_title="RE-DACT", layout="centered")
+
 st.markdown(
     """
-    <h1 style='text-align:center; font-weight:700;'>
-        RE-DACT
-    </h1>
+    <div style='text-align:center; padding-top:6px;'>
+        <h1 style='font-weight:900; letter-spacing:1px;'>RE-DACT</h1>
+        <p style='color:gray; font-size:15px;'>
+            AI-Powered Redaction & Anonymization Tool<br>
+            Protect sensitive data across documents, images & records
+        </p>
+    </div>
+
+    <div style='display:flex; justify-content:center; gap:18px; margin-top:18px; flex-wrap:wrap;'>
+        <div style='padding:10px 14px; border-radius:12px; border:1px solid #ddd;'>🔐 Detects PII Automatically</div>
+        <div style='padding:10px 14px; border-radius:12px; border:1px solid #ddd;'>🧾 Supports Text / PDF / Images / Excel</div>
+        <div style='padding:10px 14px; border-radius:12px; border:1px solid #ddd;'>⚙️ Multiple Redaction Levels</div>
+    </div>
+
+    <br>
+    <hr>
     """,
     unsafe_allow_html=True
 )
 
-level = st.slider("Select Redaction Level", 1, 4, 2)
+
+
+with st.sidebar:
+    st.header("⚙️ Redaction Controls")
+    level = st.slider("Redaction Level", 1, 4, 2)
+    st.write("""
+**Levels**
+1 — Mask  
+2 — Token Replace  
+3 — Light Anonymization  
+4 — Synthetic Replacement
+""")
+
+
+
+st.markdown(
+    """
+    <div style='margin-top:25px; padding:16px; border-radius:14px;
+                background:#f5f8ff; border:1px solid #d9e2ff;'>
+        <h4> Start Redaction</h4>
+        <p style='color:#555;'>
+            Upload your document or image to extract text and apply secure redaction.
+            Scroll below for results.
+        </p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+
 
 uploaded_file = st.file_uploader(
     "Upload a file (Text / Excel / PDF / Image)",
@@ -106,16 +151,17 @@ uploaded_file = st.file_uploader(
 )
 
 
+
 if uploaded_file:
 
     file_name = uploaded_file.name.lower()
 
+  
     if file_name.endswith(".xlsx"):
-
         df = pd.read_excel(uploaded_file)
         TEXT_COL = "PII_Found"
 
-        st.subheader("Input Preview")
+        st.subheader("📄 Input Preview")
         st.dataframe(df.head())
 
         df["REDACTED_TEXT"] = df[TEXT_COL].astype(str).apply(
@@ -123,7 +169,7 @@ if uploaded_file:
         )
 
         st.subheader("Redacted Output")
-        st.dataframe(df[["PII_Found", "REDACTED_TEXT"]].head())
+        st.dataframe(df[["PII_Found", "REDACTED_TEXT"]])
 
         out = io.BytesIO()
         df.to_excel(out, index=False)
@@ -134,22 +180,26 @@ if uploaded_file:
             file_name="REDACT_Output.xlsx"
         )
 
+   
     elif file_name.endswith(".txt"):
         text = uploaded_file.read().decode("utf-8")
 
+    
     elif file_name.endswith(".pdf"):
         text = extract_text_from_pdf(uploaded_file)
 
+   
     elif file_name.endswith((".png", ".jpg", ".jpeg")):
         text = extract_text_from_image(uploaded_file)
 
+  
     if not file_name.endswith(".xlsx"):
-
-        st.subheader("Original Text")
+        st.subheader("📄 Extracted / Original Text")
         st.write(text)
 
         entities = detect_entities(text)
         redacted = redact_text(text, entities, level)
 
-        st.subheader("Redacted Text")
+        st.subheader("🔐 Redacted Text")
         st.write(redacted)
+
