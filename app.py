@@ -2,15 +2,14 @@ import streamlit as st
 import pandas as pd
 import re
 from faker import Faker
-
 import pdfplumber
 from PIL import Image
 import pytesseract
 import io
-
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 
 fake = Faker()
-
 
 def detect_entities(text):
     entities = []
@@ -90,36 +89,59 @@ def extract_text_from_pdf(file):
 
 
 
+def generate_pdf(text):
+    buffer = io.BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
+
+    y = height - 60
+    for line in text.split("\n"):
+        if y <= 40:
+            pdf.showPage()
+            y = height - 60
+        pdf.drawString(50, y, line[:90])
+        y -= 18
+
+    pdf.save()
+    buffer.seek(0)
+    return buffer
+
+
+
 st.set_page_config(page_title="RE-DACT", layout="centered")
 
-st.markdown(
-    """
-    <div style='text-align:center; padding-top:6px;'>
-        <h1 style='font-weight:900; letter-spacing:1px;'>RE-DACT</h1>
-        <p style='color:gray; font-size:15px;'>
-            AI-Powered Redaction & Anonymization Tool<br>
-            Protect sensitive data across documents, images & records
+st.markdown("""
+    <div style="
+        text-align:center;
+        padding:28px 12px;
+        border-radius:18px;
+        background: linear-gradient(120deg, #4f46e5, #7c3aed);
+        color:white;
+        margin-bottom:10px;">
+        <h1 style="font-weight:900; letter-spacing:1px; margin-bottom:6px;">
+            RE-DACT
+        </h1>
+        <p style="font-size:15px; opacity:0.95;">
+            Secure Redaction & Anonymization Tool
         </p>
     </div>
+""", unsafe_allow_html=True)
 
-    <div style='display:flex; justify-content:center; gap:18px; margin-top:18px; flex-wrap:wrap;'>
-        <div style='padding:10px 14px; border-radius:12px; border:1px solid #ddd;'> Detects PII Automatically</div>
-        <div style='padding:10px 14px; border-radius:12px; border:1px solid #ddd;'> Supports Text / PDF / Images / Excel</div>
-        <div style='padding:10px 14px; border-radius:12px; border:1px solid #ddd;'> Multiple Redaction Levels</div>
-    </div>
 
-    <br>
-    <hr>
-    """,
-    unsafe_allow_html=True
-)
-
+st.markdown("""
+<div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+<div style="padding:8px 12px; border-radius:12px;background:#eef2ff; border:1px solid #c7d2fe;"> Detects & Redacts Sensitive PII</div>
+<div style="padding:8px 12px; border-radius:12px;background:#ecfeff; border:1px solid #bae6fd;"> Supports Text / PDF / Images / Excel</div>
+<div style="padding:8px 12px; border-radius:12px;background:#f0fdf4; border:1px solid #bbf7d0;"> Multiple Redaction Modes</div>
+</div><br>
+""", unsafe_allow_html=True)
 
 
 with st.sidebar:
-    st.header("Redaction Controls")
+    st.markdown("###  Redaction Controls")
     level = st.slider("Redaction Level", 1, 4, 2)
-    st.write("""
+
+    st.info("""
 **Levels**
 1 — Mask  
 2 — Token Replace  
@@ -129,34 +151,29 @@ with st.sidebar:
 
 
 
-st.markdown(
-    """
-    <div style='margin-top:25px; padding:16px; border-radius:14px;
-                background:#f5f8ff; border:1px solid #d9e2ff;'>
-        <h4> Start Redaction</h4>
-        <p style='color:#555;'>
-            Upload your document or image to extract text and apply secure redaction.
-            Scroll below for results.
-        </p>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
+st.markdown("""
+<div style='margin-top:5px; padding:16px;
+            border-radius:14px; background:#f8fafc;
+            border:1px solid #e5e7eb'>
+    <h4 style='margin-bottom:6px;'> Start Redaction</h4>
+    <p style='color:#555'>
+        Upload your document to extract text and apply secure anonymization.
+    </p>
+</div>
+""", unsafe_allow_html=True)
 
 
 uploaded_file = st.file_uploader(
-    "Upload a file (Text / Excel / PDF / Image)",
+    "Upload File",
     type=["txt", "xlsx", "pdf", "png", "jpg", "jpeg"]
 )
 
 
 
 if uploaded_file:
-
     file_name = uploaded_file.name.lower()
 
-  
+    
     if file_name.endswith(".xlsx"):
         df = pd.read_excel(uploaded_file)
         TEXT_COL = "PII_Found"
@@ -169,32 +186,29 @@ if uploaded_file:
         )
 
         st.subheader("Redacted Output")
-        st.dataframe(df[["PII_Found", "REDACTED_TEXT"]])
+        st.dataframe(df[["PII_Found", "REDACTED_TEXT"]].head())
 
         out = io.BytesIO()
         df.to_excel(out, index=False)
 
-        st.download_button(
-            "Download Redacted Excel",
-            out.getvalue(),
-            file_name="REDACT_Output.xlsx"
-        )
+        st.download_button("Download Redacted Excel", out.getvalue(),
+                           file_name="REDACT_Output.xlsx")
 
-   
+
     elif file_name.endswith(".txt"):
         text = uploaded_file.read().decode("utf-8")
 
-    
+   
     elif file_name.endswith(".pdf"):
         text = extract_text_from_pdf(uploaded_file)
 
-   
+    
     elif file_name.endswith((".png", ".jpg", ".jpeg")):
         text = extract_text_from_image(uploaded_file)
 
-  
     if not file_name.endswith(".xlsx"):
-        st.subheader(" Extracted / Original Text")
+
+        st.subheader("Original Text")
         st.write(text)
 
         entities = detect_entities(text)
@@ -202,6 +216,17 @@ if uploaded_file:
 
         st.subheader("Redacted Text")
         st.write(redacted)
+
+     
+        pdf_buffer = generate_pdf(redacted)
+
+        st.download_button(
+            "Download Redacted Text as PDF",
+            pdf_buffer,
+            file_name="REDACT_Output.pdf",
+            mime="application/pdf"
+        )
+
 
 
 
