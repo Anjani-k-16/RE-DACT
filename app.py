@@ -161,7 +161,7 @@ if uploaded_file:
         df = pd.read_excel(uploaded_file)
         TEXT_COL = "PII_Found"
 
-        st.subheader("📄 Input Preview")
+        st.subheader("Input Preview")
         st.dataframe(df.head())
 
         df["REDACTED_TEXT"] = df[TEXT_COL].astype(str).apply(
@@ -200,6 +200,7 @@ if uploaded_file:
         entities = detect_entities(text)
         redacted = redact_text(text, entities, level)
 
-        st.subheader("🔐 Redacted Text")
+        st.subheader("Redacted Text")
         st.write(redacted)
+
 
