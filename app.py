@@ -103,9 +103,9 @@ st.markdown(
     </div>
 
     <div style='display:flex; justify-content:center; gap:18px; margin-top:18px; flex-wrap:wrap;'>
-        <div style='padding:10px 14px; border-radius:12px; border:1px solid #ddd;'>🔐 Detects PII Automatically</div>
-        <div style='padding:10px 14px; border-radius:12px; border:1px solid #ddd;'>🧾 Supports Text / PDF / Images / Excel</div>
-        <div style='padding:10px 14px; border-radius:12px; border:1px solid #ddd;'>⚙️ Multiple Redaction Levels</div>
+        <div style='padding:10px 14px; border-radius:12px; border:1px solid #ddd;'> Detects PII Automatically</div>
+        <div style='padding:10px 14px; border-radius:12px; border:1px solid #ddd;'> Supports Text / PDF / Images / Excel</div>
+        <div style='padding:10px 14px; border-radius:12px; border:1px solid #ddd;'> Multiple Redaction Levels</div>
     </div>
 
     <br>
@@ -117,7 +117,7 @@ st.markdown(
 
 
 with st.sidebar:
-    st.header("⚙️ Redaction Controls")
+    st.header("Redaction Controls")
     level = st.slider("Redaction Level", 1, 4, 2)
     st.write("""
 **Levels**
@@ -194,7 +194,7 @@ if uploaded_file:
 
   
     if not file_name.endswith(".xlsx"):
-        st.subheader("📄 Extracted / Original Text")
+        st.subheader(" Extracted / Original Text")
         st.write(text)
 
         entities = detect_entities(text)
@@ -202,5 +202,6 @@ if uploaded_file:
 
         st.subheader("Redacted Text")
         st.write(redacted)
+
 
 
