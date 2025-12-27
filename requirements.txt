@@ -4,4 +4,6 @@ faker
 pdfplumber
 pillow
 pytesseract
-openpyxl
+reportlab
+
+
