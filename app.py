@@ -11,7 +11,7 @@ from reportlab.pdfgen import canvas
 
 fake = Faker()
 
-# ---------- ENTITY DETECTION ----------
+# -------- ENTITY DETECTION --------
 def detect_entities(text):
     entities = []
 
@@ -36,7 +36,7 @@ def detect_entities(text):
     return entities
 
 
-# ---------- REDACTION ENGINE ----------
+# -------- REDACTION ENGINE --------
 def redact_text(text, entities, level=2):
     redacted_text = text
 
@@ -72,11 +72,10 @@ def redact_text(text, entities, level=2):
     return redacted_text
 
 
-# ---------- TEXT EXTRACTION ----------
+# -------- OCR & PDF TEXT EXTRACTION --------
 def extract_text_from_image(file):
     image = Image.open(file)
     return pytesseract.image_to_string(image)
-
 
 def extract_text_from_pdf(file):
     text = ""
@@ -88,13 +87,13 @@ def extract_text_from_pdf(file):
     return text
 
 
-# ---------- PDF EXPORT ----------
+# -------- PDF EXPORT --------
 def generate_pdf(text):
     buffer = io.BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
-
     y = height - 60
+
     for line in text.split("\n"):
         if y <= 40:
             pdf.showPage()
@@ -107,46 +106,54 @@ def generate_pdf(text):
     return buffer
 
 
-# ---------- UI ----------
+# -------- UI LAYOUT --------
 st.set_page_config(page_title="RE-DACT", layout="centered")
+st.session_state.update({"collapsed": False})   # Sidebar open by default
+
 
 st.markdown("""
-<div style="text-align:center; padding:28px 12px;
-            border-radius:18px; background:#4f46e5;
-            color:white; margin-bottom:10px;">
-<h1 style="font-weight:900; letter-spacing:1px; margin-bottom:6px;">
-RE-DACT
-</h1>
-<p>Secure Redaction & Anonymization Tool</p>
-</div>
+    <div style="
+        text-align:center;
+        padding:28px 12px;
+        border-radius:18px;
+        background: linear-gradient(120deg, #4f46e5, #7c3aed);
+        color:white;
+        margin-bottom:10px;">
+        <h1 style="font-weight:900; letter-spacing:1px; margin-bottom:6px;">
+            RE-DACT
+        </h1>
+        <p style="font-size:15px; opacity:0.95;">
+            Secure Redaction & Anonymization Tool
+        </p>
+    </div>
 """, unsafe_allow_html=True)
 
 
-# ---------- SIDEBAR ----------
+# -------- SIDEBAR --------
 with st.sidebar:
-    st.markdown("### 🔧 Redaction Controls")
-
-    level = st.slider("Redaction Level", 1, 4, 2)
+    st.markdown("### Levels")
+    level = st.slider("Select Redaction Level", 1, 4, 2)
 
     st.markdown("""
-**Levels**
-1 — Mask  
-2 — Token Replace  
-3 — Light Anonymization  
-4 — Synthetic Replacement
+    1 — Mask  
+    2 — Token Replace  
+    3 — Light Anonymization  
+    4 — Synthetic Replacement
     """)
 
 
-# ---------- FILE UPLOAD ----------
+# -------- UPLOAD SECTION --------
 uploaded_file = st.file_uploader(
     "Upload File",
     type=["txt", "xlsx", "pdf", "png", "jpg", "jpeg"]
 )
 
-# ---------- PROCESS ----------
+
+# -------- PROCESS FILE --------
 if uploaded_file:
     file_name = uploaded_file.name.lower()
 
+    # Excel mode
     if file_name.endswith(".xlsx"):
         df = pd.read_excel(uploaded_file)
         TEXT_COL = "PII_Found"
@@ -168,16 +175,19 @@ if uploaded_file:
                            out.getvalue(),
                            file_name="REDACT_Output.xlsx")
 
+    # Text file
     elif file_name.endswith(".txt"):
         text = uploaded_file.read().decode("utf-8")
 
+    # PDF
     elif file_name.endswith(".pdf"):
         text = extract_text_from_pdf(uploaded_file)
 
+    # Image OCR
     elif file_name.endswith((".png", ".jpg", ".jpeg")):
         text = extract_text_from_image(uploaded_file)
 
-    # ---------- APPLY REDACTION ----------
+    # -------- Text Redaction (non-excel) --------
     if not file_name.endswith(".xlsx"):
 
         st.subheader("Original Text")
@@ -189,7 +199,6 @@ if uploaded_file:
         st.subheader("Redacted Text")
         st.write(redacted)
 
-        # Download PDF
         pdf_buffer = generate_pdf(redacted)
 
         st.download_button(
@@ -198,6 +207,8 @@ if uploaded_file:
             file_name="REDACT_Output.pdf",
             mime="application/pdf"
         )
+
+
 
 
 
