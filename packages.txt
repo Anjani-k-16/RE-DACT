@@ -5,3 +5,5 @@ tesseract-ocr-chi-sim
 tesseract-ocr-ara
 tesseract-ocr-spa
 tesseract-ocr-fra
+tesseract-ocr-hin
+tesseract-ocr-tel
