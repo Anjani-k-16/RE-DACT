@@ -9,6 +9,7 @@ import io
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 import platform
+import shutil
 
 fake = Faker()
 
@@ -38,17 +39,15 @@ def detect_entities(text):
 
 def redact_text(text, entities, level=2):
     redacted_text = text
+
     for value, label in entities:
 
         if level == 1:
             rep = "*" * len(value)
-
         elif level == 2:
             rep = f"[{label}]"
-
         elif level == 3:
             rep = f"<{label}_REDACTED>"
-
         elif level == 4:
             if label == "PERSON":
                 rep = fake.name()
@@ -69,11 +68,17 @@ def redact_text(text, entities, level=2):
 
     return redacted_text
 
-
-
 def extract_text_from_image(file):
-    if platform.system() == "Windows":
+    system = platform.system()
+
+    if system == "Windows":
         pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+    else:
+        if shutil.which("tesseract"):
+            pytesseract.pytesseract.tesseract_cmd = shutil.which("tesseract")
+        else:
+            st.error("⚠️ Tesseract OCR is not available in this environment.")
+            return ""
 
     image = Image.open(file)
     return pytesseract.image_to_string(image)
@@ -88,16 +93,18 @@ def extract_text_from_pdf(file):
                 text += page_text + "\n"
     return text
 
-def export_pdf(text):
+
+def generate_pdf(text):
     buffer = io.BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=letter)
-    x, y = 40, 750
+    width, height = letter
 
+    y = height - 60
     for line in text.split("\n"):
         if y <= 40:
             pdf.showPage()
-            y = 750
-        pdf.drawString(x, y, line)
+            y = height - 60
+        pdf.drawString(50, y, line[:90])
         y -= 18
 
     pdf.save()
@@ -105,23 +112,24 @@ def export_pdf(text):
     return buffer
 
 
-st.markdown(
-    """
-    <h1 style='text-align:center; color:#4A90E2;'>RE-DACT</h1>
-    <p style='text-align:center;'>Secure Redaction & Anonymization Tool</p>
-    """,
-    unsafe_allow_html=True
-)
+st.set_page_config(page_title="RE-DACT", layout="centered")
 
-st.write("---")
-st.write("Upload a file → extract text → detect PII → apply redaction")
-level = st.slider("Choose Redaction Level", 1, 4, 2)
+st.markdown("""
+<div style="text-align:center;padding:28px;border-radius:18px;
+background:linear-gradient(120deg,#4f46e5,#7c3aed);color:white;">
+<h1>RE-DACT</h1>
+<p>Secure Redaction & Anonymization Tool</p>
+</div>
+""", unsafe_allow_html=True)
+
+with st.sidebar:
+    st.markdown("### Redaction Controls")
+    level = st.slider("Redaction Level", 1, 4, 2)
 
 uploaded_file = st.file_uploader(
-    "Upload file (TXT / PDF / IMAGE / EXCEL)",
+    "Upload File",
     type=["txt", "xlsx", "pdf", "png", "jpg", "jpeg"]
 )
-
 
 if uploaded_file:
     file_name = uploaded_file.name.lower()
@@ -129,28 +137,20 @@ if uploaded_file:
     if file_name.endswith(".xlsx"):
         df = pd.read_excel(uploaded_file)
         TEXT_COL = "PII_Found"
-
-        st.subheader("Input Preview")
-        st.dataframe(df.head())
-
         df["REDACTED_TEXT"] = df[TEXT_COL].astype(str).apply(
             lambda x: redact_text(x, detect_entities(x), level)
         )
-
         out = io.BytesIO()
         df.to_excel(out, index=False)
         st.download_button("Download Redacted Excel", out.getvalue(),
                            file_name="REDACT_Output.xlsx")
 
-    
     elif file_name.endswith(".txt"):
         text = uploaded_file.read().decode("utf-8")
 
-   
     elif file_name.endswith(".pdf"):
         text = extract_text_from_pdf(uploaded_file)
 
-   
     elif file_name.endswith((".png", ".jpg", ".jpeg")):
         text = extract_text_from_image(uploaded_file)
 
@@ -164,6 +164,9 @@ if uploaded_file:
         st.subheader("Redacted Text")
         st.write(redacted)
 
-        pdf_file = export_pdf(redacted)
+        pdf_buffer = generate_pdf(redacted)
         st.download_button("Download Redacted Text as PDF",
-                           pdf_file, file_name="REDACT_Output.pdf")
+                           pdf_buffer, file_name="REDACT_Output.pdf",
+                           mime="application/pdf")
+
+
