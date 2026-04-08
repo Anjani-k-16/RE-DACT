@@ -17,25 +17,25 @@ RE-DACT provides **multiple levels of privacy protection**, including masking, f
 
 ---
 
-## 🚀 Live Demo
+##  Live Demo
 
 **Try the application here:**
 https://re-dact-secure-redaction-anonymization-tool.streamlit.app/
 
 ---
 
-## ✨ Key Features
+##  Key Features
 
-* 🔍 **Automatic PII Detection**
+*  **Automatic PII Detection**
   Identifies sensitive information from structured and unstructured documents.
 
-* 📄 **Multi-Format Support**
+*  **Multi-Format Support**
   Supports PDFs, scanned images, receipts, text files, and Excel sheets.
 
-* 🧠 **ML + OCR Powered Extraction**
+*  **ML + OCR Powered Extraction**
   Uses intelligent OCR scanning and machine learning techniques for accurate entity extraction.
 
-* 🛡️ **Multi-Level Redaction**
+*  **Multi-Level Redaction**
   Offers configurable redaction levels:
 
   * Partial masking
@@ -43,10 +43,10 @@ https://re-dact-secure-redaction-anonymization-tool.streamlit.app/
   * Advanced anonymization
   * Synthetic data replacement
 
-* 🌐 **User-Friendly Web Interface**
+*  **User-Friendly Web Interface**
   Built with Streamlit for simple and interactive document processing.
 
-* 🏢 **Real-World Enterprise Use Cases**
+*  **Real-World Enterprise Use Cases**
   Useful in:
 
   * Banking
@@ -57,7 +57,7 @@ https://re-dact-secure-redaction-anonymization-tool.streamlit.app/
 
 ---
 
-## 💡 Problem Statement
+##  Problem Statement
 
 Organizations often handle documents containing highly sensitive personal information. Manual redaction is time-consuming, error-prone, and not scalable.
 
@@ -65,7 +65,7 @@ RE-DACT solves this problem by automating the process of **detecting and securel
 
 ---
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 * **Python**
 * **Machine Learning**
@@ -77,7 +77,7 @@ RE-DACT solves this problem by automating the process of **detecting and securel
 
 ---
 
-## 🎯 Impact
+##  Impact
 
 RE-DACT helps organizations **protect user privacy, ensure regulatory compliance, and securely share documents** without exposing confidential data.
 
@@ -85,7 +85,7 @@ This project demonstrates the practical use of **machine learning and intelligen
 
 ---
 
-## 📌 Future Enhancements
+##  Future Enhancements
 
 * AI-powered compliance recommendation agent
 * Role-based redaction policies
